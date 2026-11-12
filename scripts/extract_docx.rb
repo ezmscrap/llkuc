@@ -77,7 +77,7 @@ def pict_links(paragraph, index)
   (1..count).map do |offset|
     number = index + offset
     filename = "document-pict-#{format('%03d', number)}.xml"
-    "[図形データ: #{filename}](../assets/shapes/#{filename})"
+    "[図形データ: #{filename}](ASSET_ROOT/shapes/#{filename})"
   end
 end
 
@@ -100,7 +100,7 @@ def image_links(paragraph, targets)
   ids = []
   REXML::XPath.each(paragraph, './/a:blip', NS) { |n| ids << n.attributes.get_attribute_ns(NS['r'], 'embed')&.value }
   REXML::XPath.each(paragraph, './/v:imagedata', NS) { |n| ids << n.attributes.get_attribute_ns(NS['r'], 'id')&.value }
-  ids.compact.uniq.map { |id| targets[id] }.compact.map { |target| "![#{File.basename(target)}](../assets/media/#{File.basename(target)})" }
+  ids.compact.uniq.map { |id| targets[id] }.compact.map { |target| "![#{File.basename(target)}](ASSET_ROOT/media/#{File.basename(target)})" }
 end
 
 def markdown_table(table)
@@ -112,6 +112,22 @@ def markdown_table(table)
   rows.each { |row| row.fill('', row.length...width) }
   header = rows.shift
   (["| #{header.join(' | ')} |", "| #{Array.new(width, '---').join(' | ')} |"] + rows.map { |r| "| #{r.join(' | ')} |" }).join("\n")
+end
+
+def safe_path_segment(number, title)
+  label = title.sub(/^\d+(?:\.\d+)*[．.]?\s*/, '').gsub(/[\\\/:*?"<>|]/, '-').gsub(/\s+/, ' ').strip
+  "#{format('%02d', number)}-#{label.empty? ? '無題' : label[0, 60]}"
+end
+
+def write_chunk(root, chunk)
+  path = File.join(root, chunk.fetch(:path))
+  FileUtils.mkdir_p(File.dirname(path))
+  asset_root = File.dirname(chunk[:path]) == 'chapters' ? '../assets' : '../../assets'
+  # Keep the terminating blank line that separated this source block from the
+  # following heading in the monolithic conversion.
+  content = chunk.fetch(:lines).join("\n").gsub('ASSET_ROOT', asset_root)
+  content = content.rstrip + "\n" if chunk[:final]
+  File.write(path, content + (chunk[:final] ? '' : "\n"))
 end
 
 FileUtils.mkdir_p(output)
@@ -163,7 +179,7 @@ targets = relationship_targets(input)
 document = REXML::Document.new(zip_read(input, 'word/document.xml'))
 body = REXML::XPath.first(document, '//w:body', NS)
 pict_index = 0
-markdown = [
+front_matter = [
   '---',
   'title: "From 0079 to 0093"',
   'source: "20071215_From0079_To0093.docx"',
@@ -174,6 +190,14 @@ markdown = [
   '     配置・テキストボックス・図形は assets/ooxml と assets/shapes を参照してください。 -->',
   ''
 ]
+chunks = [{ path: 'chapters/00-前書き.md', lines: front_matter }]
+chapter_entries = []
+current_chapter = nil
+section_number = 0
+
+append_lines = lambda do |lines|
+  chunks.last[:lines].concat(lines)
+end
 
 body.elements.each do |child|
   case child.name
@@ -183,32 +207,69 @@ body.elements.each do |child|
     shapes = pict_links(child, pict_index)
     pict_index += shapes.length
     style = paragraph_style(child)
+    lines = []
     if !text.empty?
       if style&.match?(/^[1-5]$/)
-        markdown << ('#' * style.to_i) + " #{text}"
+        lines << ('#' * style.to_i) + " #{text}"
       else
-        markdown << text
+        lines << text
       end
-      markdown << ''
+      lines << ''
     end
     unless links.empty?
-      markdown.concat(links)
-      markdown << ''
+      lines.concat(links)
+      lines << ''
     end
     unless shapes.empty?
-      markdown.concat(shapes)
-      markdown << ''
+      lines.concat(shapes)
+      lines << ''
+    end
+
+    heading_level = style&.match?(/^[1-5]$/) ? style.to_i : nil
+    if heading_level == 1
+      chapter_number = chapter_entries.length + 1
+      directory = safe_path_segment(chapter_number, text)
+      current_chapter = { directory: directory, title: text, sections: [] }
+      chapter_entries << current_chapter
+      section_number = 0
+      chunks << { path: "chapters/#{directory}/index.md", lines: lines }
+    # Some character-sheet text was styled as Heading 2 in the DOCX. Only
+    # numbered headings are actual sections; keeping the others in their
+    # chapter avoids inventing a document structure during extraction.
+    elsif heading_level == 2 && current_chapter && text.match?(/^\d+\.\d+/)
+      section_number += 1
+      filename = "#{safe_path_segment(section_number, text)}.md"
+      current_chapter[:sections] << { filename: filename, title: text }
+      chunks << { path: "chapters/#{current_chapter[:directory]}/#{filename}", lines: lines }
+    else
+      append_lines.call(lines)
     end
   when 'tbl'
     table = markdown_table(child)
     unless table.empty?
-      markdown << table
-      markdown << ''
+      append_lines.call([table, ''])
     end
   end
 end
 
-File.write(File.join(output, 'chapters/rulebook.md'), markdown.join("\n").rstrip + "\n")
+chunks.last[:final] = true
+chunks.each { |chunk| write_chunk(output, chunk) }
+FileUtils.rm_f(File.join(output, 'chapters/rulebook.md'))
+
+contents = [
+  '# 本文目次',
+  '',
+  '本文は章・節ごとのファイルに分割しています。各ファイル内の本文は変換元の並び順のままです。',
+  '',
+  '- [前書き](00-前書き.md)'
+]
+chapter_entries.each do |chapter|
+  contents << "- [#{chapter[:title]}](#{chapter[:directory]}/index.md)"
+  chapter[:sections].each do |section|
+    contents << "  - [#{section[:title]}](#{chapter[:directory]}/#{section[:filename]})"
+  end
+end
+File.write(File.join(output, 'chapters/README.md'), contents.join("\n") + "\n")
 
 metadata = REXML::Document.new(zip_read(input, 'docProps/core.xml'))
 title = REXML::XPath.first(metadata, '//*[local-name()="title"]')&.text
@@ -218,7 +279,7 @@ File.write(File.join(output, 'README.md'), <<~README)
 
   原本の DOCX を Git で編集・拡張しやすいソースへ分解したディレクトリです。
 
-  - `chapters/rulebook.md`: 段落スタイルと表を変換した編集用本文
+  - `chapters/`: 章・節ごとに分割した編集用本文（`chapters/README.md` が目次）
   - `assets/media/`: 埋め込み画像（原形式）
   - `assets/shapes/`: Word VML 図形の個別 XML と一覧
   - `assets/ooxml/`: レイアウト、ヘッダー、図形配置を再現するための WordprocessingML 原本

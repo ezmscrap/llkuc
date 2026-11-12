@@ -7,7 +7,7 @@ TRPGシステム、LLKUCのルールブック、ソースブックなどを Mark
 
 `from0079-to0093/` は `output/20071215_From0079_To0093.docx` から取り出した編集用ソースです。
 
-- `chapters/rulebook.md`: 本文と表を Markdown 化した編集の起点
+- `chapters/README.md`: 章・節へ分割した本文の目次
 - `assets/media/`: DOCX 埋め込み画像
 - `assets/shapes/`: 図形（VML）の個別 XML と一覧
 - `assets/ooxml/`: ヘッダー、レイアウト、図形配置を含む WordprocessingML

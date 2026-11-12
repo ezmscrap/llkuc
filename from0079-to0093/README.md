@@ -2,7 +2,7 @@
 
 原本の DOCX を Git で編集・拡張しやすいソースへ分解したディレクトリです。
 
-- `chapters/rulebook.md`: 段落スタイルと表を変換した編集用本文
+- `chapters/`: 章・節ごとに分割した編集用本文（`chapters/README.md` が目次）
 - `assets/media/`: 埋め込み画像（原形式）
 - `assets/shapes/`: Word VML 図形の個別 XML と一覧
 - `assets/ooxml/`: レイアウト、ヘッダー、図形配置を再現するための WordprocessingML 原本
