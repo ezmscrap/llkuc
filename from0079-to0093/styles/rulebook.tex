@@ -15,6 +15,7 @@
 \usepackage{titlesec}
 \usepackage{hyperref}
 \usepackage{etoolbox}
+\usepackage{multicol}
 
 \setlength{\parindent}{1em}
 \setlength{\parskip}{0.35\baselineskip}
@@ -33,25 +34,6 @@
   {0.5ex}
   {}
 
-% Chapters 1--9 are the prose rulebook and use a compact two-column layout.
-% Chapter 10 contains wide charts, so return to one column immediately before
-% its chapter command is evaluated.  At this point LaTeX's chapter counter
-% still contains the preceding chapter number.
-\makeatletter
-\newif\ifllkuc@twocolumn
-\pretocmd{\chapter}{%
-  \ifnum\value{chapter}=0\relax
-    \llkuc@twocolumntrue
-    \twocolumn
-  \fi
-  \ifnum\value{chapter}=9\relax
-    \llkuc@twocolumnfalse
-    \onecolumn
-  \fi
-}{} {\PackageWarning{llkuc}{Could not install chapter column hook}}
-
-% longtable cannot operate in LaTeX's two-column mode.  Make such tables full
-% width and resume the prose layout after each one; chapter 10 stays one-column.
-\pretocmd{\longtable}{\ifllkuc@twocolumn\onecolumn\fi}{} {\PackageWarning{llkuc}{Could not install longtable start hook}}
-\apptocmd{\endlongtable}{\ifllkuc@twocolumn\twocolumn\fi}{} {\PackageWarning{llkuc}{Could not install longtable end hook}}
-\makeatother
+% The two-column sections themselves are opened by styles/two-column.lua.
+% It closes the multicols environment around a longtable, so tables remain
+% where they occur in the text instead of forcing a page break.

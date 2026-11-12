@@ -70,6 +70,7 @@ pandoc \
   --toc \
   --number-sections \
   --top-level-division=chapter \
+  --lua-filter=styles/two-column.lua \
   --pdf-engine="$pdf_engine" \
   --include-in-header=styles/rulebook.tex \
   --output="$output_file" \
