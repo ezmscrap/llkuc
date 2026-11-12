@@ -1,0 +1,21 @@
+title: "From 0079 To 0093"
+author: "Circle LLK"
+lang: ja-JP
+documentclass: book
+classoption:
+  - pandoc
+  - b5paper
+  - openany
+toc: true
+toc-depth: 3
+numbersections: true
+linkcolor: "RoyalBlue"
+urlcolor: "RoyalBlue"
+colorlinks: true
+geometry:
+  - top=18mm
+  - bottom=18mm
+  - inner=18mm
+  - outer=14mm
+header-includes:
+  - \"\\setcounter{tocdepth}{3}\"

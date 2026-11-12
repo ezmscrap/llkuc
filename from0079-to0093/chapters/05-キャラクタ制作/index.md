@@ -6,5 +6,5 @@
 
 メンバー間での熟練度の決定第一指針の決定第二指針の決定経歴の決定ボーナスの割り振りＰＡＤの決定
 
-[図形データ: document-pict-005.xml](../../assets/shapes/document-pict-005.xml)
+![](../../assets/figures/document-pict-005.png)
 

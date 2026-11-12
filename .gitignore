@@ -1,3 +1,7 @@
 *.pdf
 *.docx
 /output/
+/.cache/
+/tmp/
+/*.aux
+/*.log

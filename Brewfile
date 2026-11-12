@@ -1,0 +1,7 @@
+brew "pandoc"
+brew "poppler"
+brew "ffmpeg"
+brew "typst"
+cask "basictex"
+cask "font-noto-sans-cjk-jp"
+cask "font-noto-serif-cjk-jp"

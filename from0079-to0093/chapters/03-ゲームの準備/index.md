@@ -8,7 +8,7 @@
 
 テーブルプレイヤ１プレイヤ２プレイヤ４プレイヤ３ＧＭマスタースクリーンシナリオルールブック
 
-[図形データ: document-pict-001.xml](../../assets/shapes/document-pict-001.xml)
+![](../../assets/figures/document-pict-001.png)
 
 図**1:**ゲームの準備
 
