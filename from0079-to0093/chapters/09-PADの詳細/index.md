@@ -1,5 +1,7 @@
 # 9．PADの詳細
 
+# 10 . チャート
+
 ![image9.png](../../assets/media/image9.png)
 
 攻撃処理の結果
