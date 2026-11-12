@@ -236,7 +236,11 @@ body.elements.each do |child|
     # Some character-sheet text was styled as Heading 2 in the DOCX. Only
     # numbered headings are actual sections; keeping the others in their
     # chapter avoids inventing a document structure during extraction.
-    elsif heading_level == 2 && current_chapter && text.match?(/^\d+\.\d+/)
+    # In chapter 8, three peer sections (8.5, 8.7, and 8.9) were mistakenly
+    # styled as Heading 3, so recognise that exact one-level numbering too.
+    elsif current_chapter &&
+          ((heading_level == 2 && text.match?(/^\d+\.\d+(?!\.)/)) ||
+           text.match?(/^8\.(?:5|7|9)(?![\d.])/))
       section_number += 1
       filename = "#{safe_path_segment(section_number, text)}.md"
       current_chapter[:sections] << { filename: filename, title: text }
